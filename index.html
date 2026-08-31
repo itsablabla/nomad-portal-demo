@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Nomad · Customer Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: oklch(0.982 0.004 170);
+  --surface: oklch(1 0 0);
+  --fg: oklch(0.27 0.045 178);
+  --muted: oklch(0.52 0.022 172);
+  --border: oklch(0.928 0.009 170);
+  --accent: oklch(0.545 0.115 168);
+  --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+  --fg-soft: color-mix(in oklch, var(--fg) 5%, transparent);
+  --accent-deep: color-mix(in oklch, var(--accent) 72%, var(--fg));
+  --gold: oklch(0.72 0.14 84);
+  --gold-soft: color-mix(in oklch, var(--gold) 14%, transparent);
+  --danger: oklch(0.55 0.19 27);
+  --danger-soft: color-mix(in oklch, var(--danger) 10%, transparent);
+  --font-display:'Outfit',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Menlo,monospace;
+  --radius:16px; --radius-lg:24px;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;color:inherit}
+h1,h2,h3,h4{margin:0;font-family:var(--font-display);letter-spacing:-0.01em;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ── shell ── */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:8px;padding:24px 16px;border-right:1px solid var(--border);background:var(--surface)}
+.wordmark{display:flex;align-items:center;gap:10px;padding:8px 12px 20px;font-family:var(--font-display);font-weight:700;font-size:20px}
+.wordmark .wm-dot{width:30px;height:30px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.wordmark .wm-dot svg{width:16px;height:16px}
+.wordmark small{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border:0;background:transparent;border-radius:999px;font-family:var(--font-display);font-weight:600;font-size:14.5px;color:var(--fg);text-align:left;width:100%;transition:background .15s ease}
+.nav-item svg{width:18px;height:18px;flex:none}
+.nav-item:hover{background:var(--fg-soft)}
+.nav-item.active{background:var(--accent);color:#fff}
+.nav-item .nav-badge{margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--gold-soft);color:oklch(0.5 0.13 80);padding:2px 8px;border-radius:999px}
+.nav-item.active .nav-badge{background:color-mix(in oklch,#fff 22%,transparent);color:#fff}
+.side-user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:13px;flex:none}
+.side-user b{font-family:var(--font-display);font-size:13.5px;display:block;line-height:1.2}
+.side-user span{font-size:12px;color:var(--muted)}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 36px;background:color-mix(in oklch,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.topbar h1{font-size:19px;font-weight:700}
+.top-right{display:flex;align-items:center;gap:12px}
+.balance-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;border:0;background:var(--accent);color:#fff;font-family:var(--font-display);font-weight:600;font-size:13.5px;transition:background .15s ease,scale .1s ease}
+.balance-chip:hover{background:var(--accent-deep)}
+.balance-chip:active{scale:.97}
+.balance-chip.paid{background:var(--surface);color:var(--accent-deep);border:1.5px solid var(--border);cursor:default}
+.content{padding:32px 36px 64px;max-width:1120px;width:100%;margin-inline:auto}
+
+/* ── primitives ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start}
+.row{display:flex;align-items:center;gap:12px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.meta{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.view{display:none}
+.view.active{display:block;animation:vin .25s ease}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.view-head{margin-bottom:24px}
+.view-head h2{font-size:26px;font-weight:700}
+.view-head p{color:var(--muted);margin-top:4px;max-width:56ch}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:999px;border:1.5px solid transparent;font-family:var(--font-display);font-weight:600;font-size:14px;transition:background .15s ease,border-color .15s ease,scale .1s ease}
+.btn:active{scale:.97}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-deep)}
+.btn-secondary{background:transparent;color:var(--fg);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--fg)}
+.btn-ghost{background:transparent;color:var(--accent-deep);padding-inline:10px}
+.btn-ghost:hover{background:var(--accent-soft)}
+.btn-danger{background:transparent;color:var(--danger);border-color:color-mix(in oklch,var(--danger) 35%,transparent)}
+.btn-danger:hover{background:var(--danger-soft);border-color:var(--danger)}
+.btn-sm{padding:7px 16px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;text-transform:uppercase}
+.pill-ok{background:var(--accent-soft);color:var(--accent-deep)}
+.pill-paused{background:var(--fg-soft);color:var(--muted)}
+.pill-warn{background:var(--gold-soft);color:oklch(0.48 0.12 78)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.dot.pulse{animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.switch{position:relative;width:44px;height:26px;border-radius:999px;border:0;background:color-mix(in oklch,var(--fg) 18%,var(--bg));transition:background .2s ease;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0/.25);transition:left .2s ease}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{left:21px}
+
+.meter{height:10px;border-radius:999px;background:var(--fg-soft);overflow:hidden}
+.meter>i{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .6s ease}
+.sig{display:inline-flex;align-items:flex-end;gap:3px;height:16px}
+.sig i{width:4px;border-radius:2px;background:var(--accent)}
+.sig i:nth-child(1){height:5px}.sig i:nth-child(2){height:8px}.sig i:nth-child(3){height:11px}.sig i:nth-child(4){height:14px}
+.sig.sig-3 i:nth-child(4){background:var(--fg-soft)}
+
+.ds-table{width:100%;border-collapse:collapse;font-size:14px}
+.ds-table th,.ds-table td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.ds-table th{color:var(--muted);font-weight:500;font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.ds-table tbody tr:last-child td{border-bottom:0}
+.ds-table tbody tr:hover{background:var(--fg-soft)}
+.num-col{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--fg-soft)}
+.seg button{border:0;background:transparent;border-radius:999px;padding:7px 18px;font-family:var(--font-display);font-weight:600;font-size:13.5px;color:var(--fg)}
+.seg button:hover{background:color-mix(in oklch,var(--surface) 65%,transparent)}
+.seg button.on{background:var(--surface);box-shadow:0 1px 4px rgb(1 49 39/.10)}
+
+.steps{display:flex;align-items:flex-start}
+.steps .st{flex:1;text-align:center;position:relative;padding-top:22px;font-size:12.5px;color:var(--muted)}
+.steps .st::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--border);z-index:1}
+.steps .st::after{content:"";position:absolute;top:11px;left:calc(50% + 8px);right:calc(-50% + 8px);height:2px;background:var(--border)}
+.steps .st:last-child::after{display:none}
+.steps .st.done::before,.steps .st.now::before{background:var(--accent);border-color:var(--accent)}
+.steps .st.done::after{background:var(--accent)}
+.steps .st.done,.steps .st.now{color:var(--fg);font-weight:600}
+.steps .st.now::before{box-shadow:0 0 0 4px var(--accent-soft)}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12.5px;color:var(--muted);font-weight:500}
+.input{width:100%;padding:11px 16px;border:1.5px solid var(--border);border-radius:999px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px}
+.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+.list-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--border)}
+.list-row:first-child{border-top:0}
+.icon-tile{width:40px;height:40px;border-radius:14px;background:var(--fg-soft);display:grid;place-items:center;color:var(--accent-deep);flex:none}
+.icon-tile svg{width:19px;height:19px}
+.icon-tile.gold{background:var(--gold-soft);color:oklch(0.48 0.12 78)}
+
+dialog{border:0;border-radius:var(--radius-lg);padding:0;max-width:440px;width:calc(100% - 48px);background:var(--surface);color:var(--fg);box-shadow:0 24px 80px rgb(1 49 39/.25)}
+dialog::backdrop{background:rgb(1 49 39/.35);backdrop-filter:blur(3px)}
+.dlg-body{padding:28px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--fg);color:#fff;font-family:var(--font-display);font-weight:600;font-size:14px;padding:12px 24px;border-radius:999px;opacity:0;transition:all .3s ease;z-index:60;pointer-events:none;box-shadow:0 8px 30px rgb(1 49 39/.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.hero-card{background:linear-gradient(140deg,var(--accent-deep),color-mix(in oklch,var(--accent) 85%,var(--fg)));color:#fff;border:0}
+.hero-card .meta,.hero-card p{color:color-mix(in oklch,#fff 78%,transparent)}
+.hero-card .btn-primary{background:#fff;color:var(--accent-deep)}
+.hero-card .btn-primary:hover{background:oklch(0.93 0.01 170)}
+.diag-line{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:14px}
+.diag-line .meta{margin-left:auto}
+.spin{width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.check{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+.check svg{width:10px;height:10px}
+
+@media (max-width:920px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;bottom:0;top:auto;height:auto;width:100%;flex-direction:row;align-items:center;padding:8px 10px;border-right:0;border-top:1px solid var(--border);z-index:40;overflow-x:auto}
+  .wordmark,.side-user{display:none}
+  .nav-item{width:auto;flex:none;padding:9px 14px;font-size:13px}
+  .nav-item .nav-badge{display:none}
+  .content{padding:20px 18px 110px}
+  .topbar{padding:12px 18px}
+  .grid-2,.grid-3,.grid-2-1{grid-template-columns:1fr}
+  .topbar h1{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ══ Sidebar ══ -->
+  <aside class="sidebar" data-od-id="sidebar">
+    <div class="wordmark" data-od-id="wordmark">
+      <span class="wm-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 13a12 12 0 0 1 16 0M7.5 16.5a7 7 0 0 1 9 0"/><circle cx="12" cy="20" r="1.4" fill="currentColor" stroke="none"/></svg></span>
+      <span>Nomad<small>My account</small></span>
+    </div>
+    <button class="nav-item active" data-view="overview" data-od-id="nav-overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-5v-5h-4v5H5a1 1 0 0 1-1-1z"/></svg>
+      Overview
+    </button>
+    <button class="nav-item" data-view="service" data-od-id="nav-service">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12a9 9 0 0 1 14 0M8 15.5a5 5 0 0 1 8 0"/><circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none"/></svg>
+      My Service
+    </button>
+    <button class="nav-item" data-view="billing" data-od-id="nav-billing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg>
+      Billing
+    </button>
+    <button class="nav-item" data-view="gear" data-od-id="nav-gear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14l-1.2 11a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      Gear &amp; Orders
+    </button>
+    <button class="nav-item" data-view="support" data-od-id="nav-support">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 1 1 3.6 3.3c-.6.3-.8.7-.8 1.5"/><circle cx="12" cy="17" r=".4" fill="currentColor"/></svg>
+      Support
+    </button>
+    <button class="nav-item" data-view="rewards" data-od-id="nav-rewards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 4 2.3 4.9 5.2.7-3.8 3.7.9 5.3L12 16l-4.6 2.6.9-5.3L4.5 9.6l5.2-.7z"/></svg>
+      Rewards
+      <span class="nav-badge num">1,240 pts</span>
+    </button>
+    <div class="side-user" data-od-id="sidebar-user">
+      <span class="avatar">MR</span>
+      <div><b>Marcus Reyes</b><span>Member since 2023</span></div>
+    </div>
+  </aside>
+
+  <!-- ══ Main ══ -->
+  <div class="main">
+    <header class="topbar" data-od-id="topbar">
+      <h1 id="page-title">Overview</h1>
+      <div class="top-right">
+        <button class="balance-chip num" id="pay-chip" data-od-id="quick-pay-chip">Pay $84.00 · due Sep 12</button>
+        <span class="avatar" style="width:34px;height:34px;font-size:12px">MR</span>
+      </div>
+    </header>
+
+    <main class="content">
+
+    <!-- ════════ OVERVIEW ════════ -->
+    <section class="view active" id="view-overview" data-od-id="view-overview">
+      <div class="view-head">
+        <h2>Morning, Marcus — everything's running.</h2>
+        <p>Both lines online, autopay is set, and your next bill lands September 12.</p>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card" data-od-id="sub-card-home">
+          <div class="row-between" style="margin-bottom:14px">
+            <div class="row">
+              <span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg></span>
+              <div><h3 style="font-size:16px">Home · Nomad Air</h3><span class="meta">Modem NA-2 · Kerrville, TX</span></div>
+            </div>
+            <span class="pill pill-ok"><span class="dot pulse"></span>Connected</span>
+          </div>
+          <div class="row-between" style="font-size:13px;color:var(--muted);margin-bottom:8px"><span>Data used this cycle</span><span class="num" style="color:var(--fg)">312 GB · unlimited</span></div>
+          <div class="meter"><i style="width:62%"></i></div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn btn-secondary btn-sm" data-goto="service">Manage</button>
+            <span class="meta">Signal strong · uptime 41 days</span>
+          </div>
+        </div>
+
+        <div class="card" data-od-id="sub-card-rv">
+          <div class="row-between" style="margin-bottom:14px">
+            <div class="row">
+              <span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 16V8a2 2 0 0 1 2-2h9l5 4v6"/><circle cx="8" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>
+              <div><h3 style="font-size:16px">RV · Nomad Travel</h3><span class="meta">Modem NT-5 · on the road</span></div>
+            </div>
+            <span class="pill pill-ok" id="ov-rv-pill"><span class="dot pulse"></span>Connected</span>
+          </div>
+          <div class="row-between" style="font-size:13px;color:var(--muted);margin-bottom:8px"><span>Data used this cycle</span><span class="num" style="color:var(--fg)" id="ov-rv-usage">118 GB · unlimited</span></div>
+          <div class="meter"><i id="ov-rv-meter" style="width:24%"></i></div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn btn-secondary btn-sm" data-goto="service">Manage</button>
+            <span class="meta" id="ov-rv-note">Heads-up: pause it for the off-season anytime</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card" data-od-id="household-card">
+          <p class="eyebrow">Household access</p>
+          <div class="list-row"><span class="avatar" style="width:32px;height:32px;font-size:11px">MR</span><div style="flex:1"><b style="font-size:14px">Marcus Reyes</b><div class="meta">Owner · full access</div></div></div>
+          <div class="list-row"><span class="avatar" style="width:32px;height:32px;font-size:11px;background:var(--gold)">DR</span><div style="flex:1"><b style="font-size:14px">Dana Reyes</b><div class="meta">Manager · can view &amp; pay</div></div></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="toast('Invite sent — they get their own login, not your password')">+ Invite someone</button>
+        </div>
+        <div class="card" data-od-id="profile-card">
+          <p class="eyebrow">Profile</p>
+          <div class="stack" style="gap:12px;font-size:14px">
+            <div><div class="meta">Service address</div>412 Cypress Bend Rd, Kerrville, TX 78028</div>
+            <div><div class="meta">Contact</div>marcus.r@example.com · (830) 555-0142</div>
+            <div><div class="meta">Payment</div><span class="num">Visa ·· 4242</span> — autopay on</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="toast('Profile editing opens inline — no re-verification needed')">Edit details</button>
+        </div>
+        <div class="card" data-od-id="security-card">
+          <p class="eyebrow">Sign-in</p>
+          <p style="font-size:14px;color:var(--muted)">You're remembered on this device. No codes, no re-verifying — just open and go.</p>
+          <div class="list-row" style="margin-top:8px">
+            <div style="flex:1"><b style="font-size:14px">Stay signed in</b><div class="meta">This browser · 90 days</div></div>
+            <button class="switch" role="switch" aria-checked="true" aria-label="Stay signed in" onclick="flipSwitch(this)"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ MY SERVICE ════════ -->
+    <section class="view" id="view-service" data-od-id="view-service">
+      <div class="view-head row-between" style="align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <h2>My Service</h2>
+          <p>Live status, usage, and the controls to fix 9 of 10 moments yourself.</p>
+        </div>
+        <div class="seg" role="tablist" data-od-id="device-switcher">
+          <button class="on" id="dev-home" role="tab" aria-selected="true">Home · NA-2</button>
+          <button id="dev-rv" role="tab" aria-selected="false">RV · NT-5</button>
+        </div>
+      </div>
+
+      <!-- Home device panel -->
+      <div id="panel-home">
+        <div class="grid-2-1" style="margin-bottom:20px">
+          <div class="card" data-od-id="home-status-card">
+            <div class="row-between" style="margin-bottom:18px">
+              <h3 style="font-size:17px">Nomad Air · living room</h3>
+              <span class="pill pill-ok" id="home-pill"><span class="dot pulse"></span>Connected</span>
+            </div>
+            <div class="grid-3" style="gap:14px;margin-bottom:20px">
+              <div><div class="meta">Signal</div><div class="row" style="gap:8px;margin-top:4px"><span class="sig"><i></i><i></i><i></i><i></i></span><b style="font-size:14px">Excellent</b></div></div>
+              <div><div class="meta">Uptime</div><b class="num" style="font-size:14px" id="home-uptime">41 days</b></div>
+              <div><div class="meta">Devices online</div><b class="num" style="font-size:14px">14</b></div>
+            </div>
+            <div class="row-between" style="font-size:13px;color:var(--muted);margin-bottom:8px"><span>Cycle usage · resets Sep 12</span><span class="num" style="color:var(--fg)">312 GB</span></div>
+            <div class="meter"><i style="width:62%"></i></div>
+            <div class="row" style="margin-top:20px;flex-wrap:wrap">
+              <button class="btn btn-secondary btn-sm" id="reboot-btn" data-od-id="reboot-button">Reboot modem</button>
+              <button class="btn btn-secondary btn-sm" id="diag-btn" data-od-id="diagnostic-button">Run diagnostic</button>
+              <span class="meta" id="reboot-note"></span>
+            </div>
+          </div>
+          <div class="card" data-od-id="diagnostic-card">
+            <p class="eyebrow">Diagnostic</p>
+            <div id="diag-idle"><p style="font-size:14px;color:var(--muted)">Checks placement, signal, and the network in about 20 seconds — so you know if it's the modem, the window, or us.</p></div>
+            <div id="diag-run" style="display:none">
+              <div class="diag-line" style="border-top:0" id="dl-1"><span class="spin"></span>Modem placement<span class="meta">…</span></div>
+              <div class="diag-line" id="dl-2"><span class="spin" style="visibility:hidden"></span>Tower signal<span class="meta">…</span></div>
+              <div class="diag-line" id="dl-3"><span class="spin" style="visibility:hidden"></span>Network health<span class="meta">…</span></div>
+              <p id="diag-verdict" style="display:none;margin-top:14px;font-size:14px;font-weight:600">Placement and signal are strong. The network is normal — you're all set.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RV device panel -->
+      <div id="panel-rv" style="display:none">
+        <div class="grid-2-1" style="margin-bottom:20px">
+          <div class="card" data-od-id="rv-status-card">
+            <div class="row-between" style="margin-bottom:18px">
+              <h3 style="font-size:17px">Nomad Travel · RV</h3>
+              <span class="pill pill-ok" id="rv-pill"><span class="dot pulse"></span>Connected</span>
+            </div>
+            <div class="grid-3" style="gap:14px;margin-bottom:20px">
+              <div><div class="meta">Signal</div><div class="row" style="gap:8px;margin-top:4px"><span class="sig sig-3"><i></i><i></i><i></i><i></i></span><b style="font-size:14px" id="rv-sig">Good</b></div></div>
+              <div><div class="meta">Uptime</div><b class="num" style="font-size:14px" id="rv-uptime">6 days</b></div>
+              <div><div class="meta">Devices online</div><b class="num" style="font-size:14px" id="rv-devices">3</b></div>
+            </div>
+            <div class="row-between" style="font-size:13px;color:var(--muted);margin-bottom:8px"><span>Cycle usage · resets Sep 12</span><span class="num" style="color:var(--fg)">118 GB</span></div>
+            <div class="meter"><i style="width:24%"></i></div>
+            <div class="row" style="margin-top:20px;flex-wrap:wrap">
+              <button class="btn btn-danger btn-sm" id="pause-btn" data-od-id="pause-line-button">Pause this line</button>
+              <span class="meta">Billing pauses with it — they never drift apart</span>
+            </div>
+          </div>
+          <div class="card" data-od-id="setup-card">
+            <p class="eyebrow">New gear?</p>
+            <p style="font-size:14px;color:var(--muted)">Just unboxed a modem or antenna? The walkthrough gets you online tonight — placement, power, first connect.</p>
+            <button class="btn btn-secondary btn-sm" style="margin-top:14px" onclick="toast('Setup walkthrough — 4 steps, about 10 minutes')">Start setup walkthrough</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ BILLING ════════ -->
+    <section class="view" id="view-billing" data-od-id="view-billing">
+      <div class="view-head">
+        <h2>Billing &amp; Payments</h2>
+        <p>Know what you owe, pay in seconds, never get surprised.</p>
+      </div>
+
+      <div class="grid-2-1" style="margin-bottom:20px">
+        <div class="card hero-card" data-od-id="balance-card">
+          <p class="eyebrow" style="color:color-mix(in oklch,#fff 65%,transparent)">Current balance</p>
+          <div class="row-between" style="flex-wrap:wrap;gap:20px">
+            <div>
+              <div class="num" id="bill-amount" style="font-family:var(--font-display);font-size:52px;font-weight:700;line-height:1">$84.00</div>
+              <p style="margin-top:8px" id="bill-due">Due September 12 · Home $54 + RV $30</p>
+            </div>
+            <button class="btn btn-primary" id="pay-now-btn" data-od-id="pay-now-button">Pay in 30 seconds</button>
+          </div>
+          <p class="meta" style="margin-top:18px;color:color-mix(in oklch,#fff 60%,transparent)">One-click pay works with just your email — no login needed. Share pay.nomadinternet.com with anyone in the household.</p>
+        </div>
+        <div class="stack" style="gap:20px">
+          <div class="card" data-od-id="autopay-card">
+            <div class="row-between">
+              <div><b style="font-family:var(--font-display);font-size:15px">Autopay</b><div class="meta" id="autopay-note">On · heads-up email 3 days before</div></div>
+              <button class="switch" role="switch" aria-checked="true" id="autopay-switch" aria-label="Autopay"></button>
+            </div>
+          </div>
+          <div class="card" data-od-id="nomadcares-card">
+            <b style="font-family:var(--font-display);font-size:15px">NomadCares</b>
+            <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Hard month? A real person can set up a plan, pause, or credit — no shame, no hoops.</p>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="toast('NomadCares request opened — a human replies within 4 business hours')">Talk to NomadCares</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-od-id="invoice-history">
+        <div class="row-between" style="margin-bottom:8px">
+          <h3 style="font-size:16px">Invoices</h3>
+          <span class="meta">Clean PDFs — tax time, reimbursement, landlord</span>
+        </div>
+        <table class="ds-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Status</th><th class="num-col">Amount</th><th class="num-col">PDF</th></tr></thead>
+          <tbody>
+            <tr><td class="num">Aug 12, 2026</td><td>Home + RV · monthly service</td><td><span class="pill pill-ok">Paid</span></td><td class="num-col">$84.00</td><td class="num-col"><button class="btn btn-ghost btn-sm" onclick="toast('Invoice INV-2608 downloaded')">↓</button></td></tr>
+            <tr><td class="num">Jul 12, 2026</td><td>Home + RV · monthly service</td><td><span class="pill pill-ok">Paid</span></td><td class="num-col">$84.00</td><td class="num-col"><button class="btn btn-ghost btn-sm" onclick="toast('Invoice INV-2607 downloaded')">↓</button></td></tr>
+            <tr><td class="num">Jun 12, 2026</td><td>Home only · RV line paused</td><td><span class="pill pill-ok">Paid</span></td><td class="num-col">$54.00</td><td class="num-col"><button class="btn btn-ghost btn-sm" onclick="toast('Invoice INV-2606 downloaded')">↓</button></td></tr>
+            <tr><td class="num">May 30, 2026</td><td>Credit · outage make-good</td><td><span class="pill pill-warn">Credit</span></td><td class="num-col">−$12.00</td><td class="num-col"><button class="btn btn-ghost btn-sm" onclick="toast('Credit memo downloaded')">↓</button></td></tr>
+          </tbody>
+        </table>
+        <div class="row-between" style="margin-top:14px;flex-wrap:wrap">
+          <span class="meta">Paused a line? Its billing pauses the same minute.</span>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Refund request started — most land within 3–5 days, tracked right here')">Request a refund or credit</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ GEAR & ORDERS ════════ -->
+    <section class="view" id="view-gear" data-od-id="view-gear">
+      <div class="view-head">
+        <h2>Gear &amp; Orders</h2>
+        <p>Replace, upgrade, and track — from the account you already have. Never a "new customer" checkout.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px" data-od-id="order-tracker">
+        <div class="row-between" style="margin-bottom:20px;flex-wrap:wrap">
+          <div><h3 style="font-size:16px">Order #N-88412 · Travel antenna</h3><span class="meta">Placed Aug 26 · arrives Tue, Sep 1</span></div>
+          <span class="pill pill-ok"><span class="dot pulse"></span>On the truck</span>
+        </div>
+        <div class="steps">
+          <div class="st done">Ordered<br><span class="meta">Aug 26</span></div>
+          <div class="st done">Shipped<br><span class="meta">Aug 28</span></div>
+          <div class="st now">On the truck<br><span class="meta">Today</span></div>
+          <div class="st">Delivered<br><span class="meta">Sep 1</span></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card" data-od-id="rma-card">
+          <div class="row-between" style="margin-bottom:12px">
+            <h3 style="font-size:16px">RMA #R-2044 · Nomad Air (old unit)</h3>
+            <span class="pill pill-warn">Return in transit</span>
+          </div>
+          <p style="font-size:14px;color:var(--muted)">We received your label scan Aug 27. The replacement ships the moment the return hits our dock — you're never offline waiting.</p>
+          <div class="row" style="margin-top:14px">
+            <button class="btn btn-secondary btn-sm" onclick="toast('Tracking opened — return is 2 stops from our dock')">Track return</button>
+            <span class="meta">Replacement reserved ✓</span>
+          </div>
+        </div>
+        <div class="card" data-od-id="add-line-card">
+          <h3 style="font-size:16px;margin-bottom:8px">Add to your setup</h3>
+          <div class="list-row"><span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M12 17h.01"/></svg></span><div style="flex:1"><b style="font-size:14px">Replacement modem</b><div class="meta">Ships tied to this account</div></div><button class="btn btn-secondary btn-sm" onclick="toast('Added — checkout uses your saved card and address')">Order</button></div>
+          <div class="list-row"><span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 20V10M12 10 6 4h12z"/></svg></span><div style="flex:1"><b style="font-size:14px">Signal antenna</b><div class="meta">Best for rural + metal roofs</div></div><button class="btn btn-secondary btn-sm" onclick="toast('Added — checkout uses your saved card and address')">Order</button></div>
+          <div class="list-row"><span class="icon-tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><div style="flex:1"><b style="font-size:14px">Second line</b><div class="meta">Same login, one bill</div></div><button class="btn btn-secondary btn-sm" onclick="toast('Line added to cart — no new account, ever')">Add</button></div>
+        </div>
+      </div>
+      <p class="meta" data-od-id="gear-footnote">Your gear is tied to your account — replacing it is as easy as buying a case for your phone.</p>
+    </section>
+
+    <!-- ════════ SUPPORT ════════ -->
+    <section class="view" id="view-support" data-od-id="view-support">
+      <div class="view-head">
+        <h2>Help &amp; Support</h2>
+        <p>Answers that already know your setup — 24/7, self-serve to human. Even at 2am in a Walmart parking lot.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;padding:20px" data-od-id="support-search">
+        <div class="row" style="gap:10px">
+          <input class="input" id="support-q" placeholder="Ask anything — try “why is my internet slow?”" aria-label="Search help">
+          <button class="btn btn-secondary" onclick="answerSearch()">Search</button>
+        </div>
+        <div id="search-answer" style="display:none;margin-top:16px;padding:16px 18px;border-radius:var(--radius);background:var(--fg-soft);font-size:14px">
+          <b>Slow on your Home line?</b> Your NA-2 signal is <b>excellent</b>, so placement is fine. 14 devices are online — a big download or backup is the usual cause. A reboot clears it 8 times out of 10. <button class="btn btn-ghost btn-sm" data-goto="service">Reboot from My Service →</button>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:20px">
+        <div class="card" data-od-id="chat-card">
+          <span class="icon-tile" style="margin-bottom:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg></span>
+          <h3 style="font-size:15.5px">Live chat</h3>
+          <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Already knows your account and both modems. You never repeat yourself.</p>
+          <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="toast('Chat opened — agent sees NA-2 + NT-5 status already')">Start chat · 24/7</button>
+        </div>
+        <div class="card" data-od-id="status-card">
+          <span class="icon-tile" style="margin-bottom:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span>
+          <h3 style="font-size:15.5px">Network status</h3>
+          <p style="font-size:13.5px;margin-top:4px"><span class="pill pill-ok"><span class="dot pulse"></span>All systems normal</span></p>
+          <p style="font-size:13.5px;color:var(--muted);margin-top:8px">Your two towers: Kerrville TX and your last RV location — both healthy.</p>
+        </div>
+        <div class="card" data-od-id="community-card">
+          <span class="icon-tile" style="margin-bottom:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5M15 19c0-2 1.3-3.6 3.2-4"/></svg></span>
+          <h3 style="font-size:15.5px">Community</h3>
+          <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Answers from Nomads on the same roads — and a human waiting when AI isn't enough.</p>
+          <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="toast('Community opens with your gear tagged — answers match your setup')">Browse answers</button>
+        </div>
+      </div>
+
+      <div class="card" data-od-id="tickets-card">
+        <div class="row-between" style="margin-bottom:8px">
+          <h3 style="font-size:16px">My tickets &amp; requests</h3>
+          <button class="btn btn-ghost btn-sm" onclick="toast('New ticket — your modem details attach automatically')">+ New ticket</button>
+        </div>
+        <table class="ds-table">
+          <thead><tr><th>ID</th><th>Subject</th><th>Updated</th><th class="num-col">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="num">T-5182</td><td>RV modem drops at night</td><td class="num">Aug 27</td><td class="num-col"><span class="pill pill-ok">Resolved</span></td></tr>
+            <tr><td class="num">R-2044</td><td>RMA · Nomad Air replacement</td><td class="num">Today</td><td class="num-col"><span class="pill pill-warn">In transit</span></td></tr>
+            <tr><td class="num">F-0917</td><td>Feedback · one-click pay is great</td><td class="num">Aug 20</td><td class="num-col"><span class="pill pill-ok">Sent to product</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ════════ REWARDS ════════ -->
+    <section class="view" id="view-rewards" data-od-id="view-rewards">
+      <div class="view-head">
+        <h2>Rewards &amp; Referrals</h2>
+        <p>Being a customer pays. You've been here since 2023 — Nomad noticed.</p>
+      </div>
+
+      <div class="grid-2-1" style="margin-bottom:20px">
+        <div class="card" data-od-id="referral-card">
+          <p class="eyebrow">Your referral link · 100 pts per friend, instantly, no fine print</p>
+          <div class="row" style="gap:10px;flex-wrap:wrap">
+            <input class="input num" style="flex:1;min-width:220px" readonly value="nomadinternet.com/r/MARCUS-2023" id="ref-link" aria-label="Referral link">
+            <button class="btn btn-primary" id="copy-ref" data-od-id="copy-referral-button">Copy link</button>
+          </div>
+          <div style="margin-top:20px">
+            <div class="list-row"><span class="avatar" style="width:30px;height:30px;font-size:11px;background:var(--muted)">JT</span><div style="flex:1"><b style="font-size:14px">Jake T. joined</b><div class="meta">Aug 14 · from your link</div></div><b class="num" style="color:oklch(0.48 0.12 78)">+100 pts</b></div>
+            <div class="list-row"><span class="avatar" style="width:30px;height:30px;font-size:11px;background:var(--muted)">PL</span><div style="flex:1"><b style="font-size:14px">Priya L. joined</b><div class="meta">Jul 02 · from your link</div></div><b class="num" style="color:oklch(0.48 0.12 78)">+100 pts</b></div>
+            <div class="list-row"><span class="avatar" style="width:30px;height:30px;font-size:11px;background:var(--muted)">SO</span><div style="flex:1"><b style="font-size:14px">Sam O. joined</b><div class="meta">May 19 · from your link</div></div><b class="num" style="color:oklch(0.48 0.12 78)">+100 pts</b></div>
+          </div>
+        </div>
+        <div class="stack" style="gap:20px">
+          <div class="card" style="background:var(--gold-soft);border-color:color-mix(in oklch,var(--gold) 30%,transparent)" data-od-id="points-card">
+            <p class="eyebrow" style="color:oklch(0.48 0.12 78)">Points balance</p>
+            <div class="num" style="font-family:var(--font-display);font-size:44px;font-weight:700;line-height:1" id="pts-balance">1,240</div>
+            <p style="font-size:13px;color:var(--muted);margin-top:6px">3 referrals landed · member since 2023</p>
+          </div>
+          <div class="card" data-od-id="early-access-card">
+            <span class="pill pill-warn" style="margin-bottom:8px">Early access</span>
+            <p style="font-size:13.5px;color:var(--muted)">The next-gen Travel modem opens to 2023 members first — you're on the list.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" data-od-id="redeem-card">
+        <h3 style="font-size:16px;margin-bottom:4px">Redeem for real value</h3>
+        <p class="meta" style="margin-bottom:8px">Points post instantly — no waiting period</p>
+        <div class="list-row"><span class="icon-tile gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg></span><div style="flex:1"><b style="font-size:14px">$10 store credit</b><div class="meta num">500 pts</div></div><button class="btn btn-secondary btn-sm" data-redeem="500" data-what="$10 store credit">Redeem</button></div>
+        <div class="list-row"><span class="icon-tile gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span><div style="flex:1"><b style="font-size:14px">One month of service</b><div class="meta num">2,000 pts</div></div><button class="btn btn-secondary btn-sm" data-redeem="2000" data-what="a free month">Redeem</button></div>
+        <div class="list-row"><span class="icon-tile gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 20V10M12 10 6 4h12z"/></svg></span><div style="flex:1"><b style="font-size:14px">Travel antenna accessory</b><div class="meta num">1,200 pts</div></div><button class="btn btn-secondary btn-sm" data-redeem="1200" data-what="the travel antenna">Redeem</button></div>
+      </div>
+    </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ Pay dialog ══ -->
+<dialog id="pay-dlg" data-od-id="pay-dialog">
+  <form method="dialog" class="dlg-body stack" style="gap:18px">
+    <div>
+      <h3 style="font-size:19px">Pay your balance</h3>
+      <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Home $54.00 + RV $30.00 · September cycle</p>
+    </div>
+    <div class="row-between" style="padding:14px 18px;border:1.5px solid var(--border);border-radius:var(--radius)">
+      <div class="row"><span class="icon-tile" style="width:34px;height:34px;border-radius:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg></span><div><b class="num" style="font-size:14px">Visa ·· 4242</b><div class="meta">Saved · default</div></div></div>
+      <span class="pill pill-ok">1-click</span>
+    </div>
+    <button class="btn btn-primary" id="confirm-pay" value="pay" style="width:100%">Pay $84.00 now</button>
+    <button class="btn btn-ghost btn-sm" value="cancel" style="align-self:center">Not now</button>
+  </form>
+</dialog>
+
+<!-- ══ Pause dialog ══ -->
+<dialog id="pause-dlg" data-od-id="pause-dialog">
+  <form method="dialog" class="dlg-body stack" style="gap:16px">
+    <h3 style="font-size:19px">Pause the RV line?</h3>
+    <p style="font-size:14px;color:var(--muted)">Service and billing pause together, the same minute. Resume anytime with one tap — your gear and number stay yours.</p>
+    <div class="row-between" style="padding:12px 16px;background:var(--fg-soft);border-radius:var(--radius);font-size:13.5px">
+      <span>Next bill drops to</span><b class="num">$54.00 / mo</b>
+    </div>
+    <button class="btn btn-primary" value="pause" id="confirm-pause" style="width:100%">Pause line + billing</button>
+    <button class="btn btn-ghost btn-sm" value="cancel" style="align-self:center">Keep it running</button>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var titles={overview:'Overview',service:'My Service',billing:'Billing & Payments',gear:'Gear & Orders',support:'Help & Support',rewards:'Rewards & Referrals'};
+
+  /* toast */
+  var tt;
+  window.toast=function(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('show')},2600)};
+  window.flipSwitch=function(el){el.setAttribute('aria-checked',el.getAttribute('aria-checked')==='true'?'false':'true')};
+
+  /* view switching + persistence */
+  function show(v){
+    document.querySelectorAll('.view').forEach(function(s){s.classList.toggle('active',s.id==='view-'+v)});
+    document.querySelectorAll('.nav-item').forEach(function(b){b.classList.toggle('active',b.dataset.view===v)});
+    $('page-title').textContent=titles[v]||'Overview';
+    try{localStorage.setItem('nomad-portal-view',v)}catch(e){}
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  document.querySelectorAll('.nav-item').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.view)})});
+  document.querySelectorAll('[data-goto]').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.goto)})});
+  var forced=window.__FORCE_VIEW||null;try{forced=new URLSearchParams(location.search).get('view')||forced}catch(e){}
+  var saved=null;try{saved=localStorage.getItem('nomad-portal-view')}catch(e){}
+  if(forced&&titles[forced])show(forced);
+  else if(saved&&titles[saved])show(saved);
+
+  /* device tabs */
+  function dev(which){
+    $('panel-home').style.display=which==='home'?'':'none';
+    $('panel-rv').style.display=which==='rv'?'':'none';
+    $('dev-home').classList.toggle('on',which==='home');$('dev-home').setAttribute('aria-selected',which==='home');
+    $('dev-rv').classList.toggle('on',which==='rv');$('dev-rv').setAttribute('aria-selected',which==='rv');
+  }
+  $('dev-home').addEventListener('click',function(){dev('home')});
+  $('dev-rv').addEventListener('click',function(){dev('rv')});
+
+  /* reboot simulation */
+  $('reboot-btn').addEventListener('click',function(){
+    var btn=this,pill=$('home-pill'),note=$('reboot-note'),s=8;
+    btn.disabled=true;
+    pill.className='pill pill-warn';pill.innerHTML='<span class="dot pulse"></span>Rebooting';
+    note.textContent='Back online in ~'+s+'s — no call, no wait';
+    var iv=setInterval(function(){
+      s--;
+      if(s>0){note.textContent='Back online in ~'+s+'s — no call, no wait';return}
+      clearInterval(iv);
+      pill.className='pill pill-ok';pill.innerHTML='<span class="dot pulse"></span>Connected';
+      $('home-uptime').textContent='0 days';
+      note.textContent='';btn.disabled=false;
+      toast('Modem rebooted — connection is fresh');
+    },700);
+  });
+
+  /* diagnostic simulation */
+  $('diag-btn').addEventListener('click',function(){
+    var btn=this;btn.disabled=true;
+    $('diag-idle').style.display='none';$('diag-run').style.display='';
+    $('diag-verdict').style.display='none';
+    var lines=['dl-1','dl-2','dl-3'],results=['Clear of walls ✓','−92 dBm · strong ✓','No congestion ✓'];
+    lines.forEach(function(id){var l=$(id);l.children[0].outerHTML='<span class="spin" style="visibility:'+(id==='dl-1'?'visible':'hidden')+'"></span>';l.querySelector('.meta').textContent='…'});
+    lines.forEach(function(id,i){
+      setTimeout(function(){
+        var l=$(id);
+        l.children[0].outerHTML='<span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg></span>';
+        l.querySelector('.meta').textContent=results[i];
+        var nx=$(lines[i+1]);if(nx&&nx.children[0].classList.contains('spin'))nx.children[0].style.visibility='visible';
+        if(i===2){$('diag-verdict').style.display='';btn.disabled=false}
+      },900*(i+1));
+    });
+  });
+
+  /* pause / resume RV line */
+  var paused=false;
+  $('pause-btn').addEventListener('click',function(){
+    if(!paused){$('pause-dlg').showModal();return}
+    paused=false;setRV(false);toast('RV line resumed — billing restarts today, prorated');
+  });
+  $('pause-dlg').addEventListener('close',function(){
+    if($('pause-dlg').returnValue==='pause'){paused=true;setRV(true);toast('RV line paused — billing paused with it')}
+  });
+  function setRV(off){
+    var pill=$('rv-pill'),ovp=$('ov-rv-pill'),btn=$('pause-btn');
+    if(off){
+      pill.className='pill pill-paused';pill.innerHTML='<span class="dot"></span>Paused';
+      ovp.className='pill pill-paused';ovp.innerHTML='<span class="dot"></span>Paused';
+      $('ov-rv-note').textContent='Paused — $0/mo until you resume';
+      $('rv-sig').textContent='—';$('rv-uptime').textContent='—';$('rv-devices').textContent='0';
+      btn.textContent='Resume line';btn.className='btn btn-primary btn-sm';
+      if(!window._paid){$('bill-amount').textContent='$54.00';$('bill-due').textContent='Due September 12 · Home only, RV paused';$('pay-chip').textContent='Pay $54.00 · due Sep 12'}
+    }else{
+      pill.className='pill pill-ok';pill.innerHTML='<span class="dot pulse"></span>Connected';
+      ovp.className='pill pill-ok';ovp.innerHTML='<span class="dot pulse"></span>Connected';
+      $('ov-rv-note').textContent='Heads-up: pause it for the off-season anytime';
+      $('rv-sig').textContent='Good';$('rv-uptime').textContent='0 days';$('rv-devices').textContent='3';
+      btn.textContent='Pause this line';btn.className='btn btn-danger btn-sm';
+      if(!window._paid){$('bill-amount').textContent='$84.00';$('bill-due').textContent='Due September 12 · Home $54 + RV $30';$('pay-chip').textContent='Pay $84.00 · due Sep 12'}
+    }
+  }
+
+  /* pay flow */
+  function openPay(){if(!window._paid)$('pay-dlg').showModal()}
+  $('pay-chip').addEventListener('click',openPay);
+  $('pay-now-btn').addEventListener('click',openPay);
+  $('pay-dlg').addEventListener('close',function(){
+    if($('pay-dlg').returnValue!=='pay')return;
+    window._paid=true;
+    $('bill-amount').textContent='$0.00';
+    $('bill-due').textContent='Paid in full · next bill Oct 12';
+    $('pay-now-btn').style.display='none';
+    var chip=$('pay-chip');chip.textContent='Paid ✓ · next bill Oct 12';chip.classList.add('paid');chip.disabled=true;
+    toast('Payment received — that took about 30 seconds');
+  });
+
+  /* autopay */
+  $('autopay-switch').addEventListener('click',function(){
+    flipSwitch(this);
+    var on=this.getAttribute('aria-checked')==='true';
+    $('autopay-note').textContent=on?'On · heads-up email 3 days before':'Off · you\u2019ll pay manually each cycle';
+    toast(on?'Autopay on — we email you 3 days before any charge':'Autopay off');
+  });
+
+  /* support search */
+  window.answerSearch=function(){$('search-answer').style.display=''};
+  $('support-q').addEventListener('keydown',function(e){if(e.key==='Enter')answerSearch()});
+
+  /* referral copy */
+  $('copy-ref').addEventListener('click',function(){
+    var link=$('ref-link').value;
+    if(navigator.clipboard)navigator.clipboard.writeText('https://'+link).catch(function(){});
+    toast('Referral link copied — 100 pts the moment a friend joins');
+  });
+
+  /* redeem */
+  var pts=1240;
+  document.querySelectorAll('[data-redeem]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var cost=+b.dataset.redeem;
+      if(pts<cost){toast('You need '+(cost-pts).toLocaleString()+' more points for that');return}
+      pts-=cost;$('pts-balance').textContent=pts.toLocaleString();
+      document.querySelectorAll('.nav-badge')[0].textContent=pts.toLocaleString()+' pts';
+      toast('Redeemed '+b.dataset.what+' — it\u2019s applied to your account now');
+    });
+  });
+})();
+</script>
+</body>
+</html>
